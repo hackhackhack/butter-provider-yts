@@ -100,7 +100,6 @@ var processCloudFlareHack = function (options, url) {
 YTS.prototype.fetch = function (filters) {
     var that = this;
 
-    console.error ('fetch', this)
     var params = {
         sort_by: 'seeds',
         limit: 50,
