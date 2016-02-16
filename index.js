@@ -81,6 +81,22 @@ var format = function (data) {
     };
 };
 
+var processCloudFlareHack = function (options, url) {
+    var req = options;
+    var match = url.match(/^cloudflare\+(.*):\/\/(.*)/)
+    if (match) {
+        req = _.extend(req, {
+            uri: match[1] + '://cloudflare.com/',
+            headers: {
+                'Host': match[2],
+                'User-Agent': 'Mozilla/5.0 (Linux) AppleWebkit/534.30 (KHTML, like Gecko) PT/3.8.0'
+            }
+        })
+    }
+
+    return req
+}
+
 YTS.prototype.fetch = function (filters) {
     var that = this;
 
@@ -131,16 +147,18 @@ YTS.prototype.fetch = function (filters) {
     var defer = Q.defer();
 
     function get(index) {
+        var url = that.apiURL[index]
         var options = {
-            uri: that.apiURL[index] + 'api/v2/list_movies.json',
+            uri: url + 'api/v2/list_movies.json',
             qs: params,
             json: true,
             timeout: 10000
         };
-        var req = _.extend({}, that.apiURL[index], options);
+
+        var req = processCloudFlareHack(options, url)
         request(req, function (err, res, data) {
             if (err || res.statusCode >= 400 || (data && !data.data)) {
-                console.warn('YTS API endpoint \'%s\' failed.', that.apiURL[index]);
+                console.warn('YTS API endpoint \'%s\' failed.', url);
                 if (index + 1 >= that.apiURL.length) {
                     return defer.reject(err || 'Status Code is above 400');
                 } else {
@@ -153,8 +171,7 @@ YTS.prototype.fetch = function (filters) {
             } else {
                 return defer.resolve(format(data.data));
             }
-        });
-    }
+        });}
     get(0);
 
     return defer.promise;
@@ -165,15 +182,16 @@ YTS.prototype.random = function () {
     var defer = Q.defer();
 
     function get(index) {
+        var url = that.apiURL[index];
         var options = {
-            uri: that.apiURL[index] + 'api/v2/get_random_movie.json?' + Math.round((new Date()).valueOf() / 1000),
+            uri: url + 'api/v2/get_random_movie.json?' + Math.round((new Date()).valueOf() / 1000),
             json: true,
             timeout: 10000
         };
-        var req = _.extend({}, that.apiURL[index], options);
+        var req = processCloudFlareHack(options, url)
         request(req, function (err, res, data) {
             if (err || res.statusCode >= 400 || (data && !data.data)) {
-                console.warn('YTS API endpoint \'%s\' failed.', that.apiURL[index]);
+                console.warn('YTS API endpoint \'%s\' failed.', url);
                 if (index + 1 >= that.apiURL.length) {
                     return defer.reject(err || 'Status Code is above 400');
                 } else {
