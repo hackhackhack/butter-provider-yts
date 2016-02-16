@@ -1,0 +1,2 @@
+This is a [[https://github.com/butterproject][Butter]] provider to access content from a YTS service, if you want
+to find more info on Butter Providers check the [[https://github.com/butterproject/butter-provider][Butter Provider Docs]].
