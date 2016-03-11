@@ -6,6 +6,7 @@ var inherits = require('util').inherits;
 var _ = require('lodash');
 var Generic = require('butter-provider');
 var sanitize = require('butter-sanitize');
+var txtAPI = require('popcorn-txt-api');
 
 function YTS(args) {
     if (!(this instanceof YTS)) {
@@ -15,9 +16,9 @@ function YTS(args) {
     Generic.call(this);
 
     if (args.apiURL)
-        this.apiURL = _.map(args.apiURL.split(','), function (url){
-            return url;
-        })
+        this.apiURL = Q.all(_.map(args.apiURL.split(','), function (url){
+            return txtAPI(url);
+        }));
 
     this.quality = args.quality;
     this.translate = args.translate;
@@ -145,8 +146,8 @@ YTS.prototype.fetch = function (filters) {
 
     var defer = Q.defer();
 
-    function get(index) {
-        var url = that.apiURL[index]
+    function get(apis, index) {
+        var url = apis[index]
         var options = {
             uri: url + 'api/v2/list_movies.json',
             qs: params,
@@ -158,10 +159,10 @@ YTS.prototype.fetch = function (filters) {
         request(req, function (err, res, data) {
             if (err || res.statusCode >= 400 || (data && !data.data)) {
                 console.warn('YTS API endpoint \'%s\' failed.', url);
-                if (index + 1 >= that.apiURL.length) {
+                if (index + 1 >= apis.length) {
                     return defer.reject(err || 'Status Code is above 400');
                 } else {
-                    get(index + 1);
+                    get(apis, index + 1);
                 }
                 return;
             } else if (!data || data.status === 'error') {
@@ -171,7 +172,10 @@ YTS.prototype.fetch = function (filters) {
                 return defer.resolve(format(data.data));
             }
         });}
-    get(0);
+
+    this.apiURL.then(function(apis) {
+        get(apis, 0)
+    });
 
     return defer.promise;
 };
@@ -180,8 +184,8 @@ YTS.prototype.random = function () {
     var that = this;
     var defer = Q.defer();
 
-    function get(index) {
-        var url = that.apiURL[index];
+    function get(apis, index) {
+        var url = apis[index];
         var options = {
             uri: url + 'api/v2/get_random_movie.json?' + Math.round((new Date()).valueOf() / 1000),
             json: true,
@@ -194,7 +198,7 @@ YTS.prototype.random = function () {
                 if (index + 1 >= that.apiURL.length) {
                     return defer.reject(err || 'Status Code is above 400');
                 } else {
-                    get(index + 1);
+                    get(apis,index + 1);
                 }
                 return;
             } else if (!data || data.status === 'error') {
@@ -205,7 +209,10 @@ YTS.prototype.random = function () {
             }
         });
     }
-    get(0);
+
+    this.apiURL.then(function(apis) {
+        get(apis, 0)
+    });
 
     return defer.promise;
 };

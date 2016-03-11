@@ -4,7 +4,7 @@
   "description": "A Butter provider for YTS",
   "main": "index.js",
   "butter": {
-    "testArgs": "yts?&apiURL=http://62.210.81.37/"
+    "testArgs": "yts?&apiURL=http://62.210.81.37/,dnstxt://_movies.api-fetch.website/"
   },
   "scripts": {
     "test": "tape ./node_modules/butter-test-provider/tests/*"
@@ -28,6 +28,7 @@
     "butter-provider": "^0.2.0",
     "butter-sanitize": "^0.1.0",
     "lodash": "^4.0.0",
+    "popcorn-txt-api": "0.0.5",
     "q": "^1.4.1",
     "request": "^2.67.0",
     "sanitizer": "^0.1.3"
